@@ -113,17 +113,17 @@ public class HttpClientsWithProxyPool(
 			using var _ = Disposable.Create(() => _creatingNewHttpClientLock.Release());
 			CreateLockedHttpClient();
 			chosenClientIndex = _httpClients.Count - 1;
-			_logger?.LogInformation($"Created {nameof(HttpClient)}:{_httpClients.GetHashCode() / 100_000}. Current count: {_httpClients.Count}.");
+			_logger?.LogInformation($"Created {nameof(HttpClient)}:{_httpClients[chosenClientIndex].GetHashCode() / 100_000}. Current count: {_httpClients.Count}.");
 		}
 
 		var chosenClient = _httpClients[chosenClientIndex];
 		chosenClient.DynamicWebProxy.SetProxy(proxyUrl);
-		_logger?.LogInformation($"Dedicated {nameof(HttpClient)}:{_httpClients.GetHashCode()/100_000} for {proxyUrl}.");
+		_logger?.LogInformation($"Dedicated {nameof(HttpClient)}:{chosenClient.GetHashCode()/100_000} for {proxyUrl}.");
 		return (Disposable.Create(() =>
 		{
 			Volatile.Write(ref chosenClient.LockCount, 0);
 			_availableHttpClientsCountdown.Release();
-			_logger?.LogInformation($"Released {nameof(HttpClient)}:{_httpClients.GetHashCode() / 100_000} from {proxyUrl}.");
+			_logger?.LogInformation($"Released {nameof(HttpClient)}:{chosenClient.GetHashCode() / 100_000} from {proxyUrl}.");
 		}), chosenClient.HttpClient);
 	}
 
